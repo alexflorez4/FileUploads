@@ -257,7 +257,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                     case 0: //posting date
                         break;
                     case 1: //transaction date
-                        transDetail.setTransDate(currentCell.getDateCellValue());
+                        transDetail.setTransDate(currentCell.getStringCellValue());
                         break;
                     case 2: //Reference ID
                         break;

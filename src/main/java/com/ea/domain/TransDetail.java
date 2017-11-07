@@ -1,18 +1,16 @@
 package main.java.com.ea.domain;
 
-import java.util.Date;
-
 public class TransDetail
 {
     private int llc;
-    private Date transDate;
+    private String transDate;
     private String supplier;
     private int entity;
     private int cc;
     private double total;
     private String notes;
 
-    public TransDetail(int llc, Date transDate, String supplier, int entity, int cc, double total, String notes)
+    public TransDetail(int llc, String transDate, String supplier, int entity, int cc, double total, String notes)
     {
         this.llc = llc;
         this.transDate = transDate;
@@ -31,11 +29,11 @@ public class TransDetail
         this.llc = llc;
     }
 
-    public Date getTransDate() {
+    public String getTransDate() {
         return transDate;
     }
 
-    public void setTransDate(Date transDate) {
+    public void setTransDate(String transDate) {
         this.transDate = transDate;
     }
 
