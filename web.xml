@@ -21,8 +21,6 @@
         <param-value>/WEB-INF/config-upload.xml</param-value>
     </context-param>
 
-
-
     <servlet-mapping>
         <servlet-name>Dispatcher</servlet-name>
         <url-pattern>*.do</url-pattern>

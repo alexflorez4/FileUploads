@@ -22,6 +22,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,5 +55,17 @@ public class FileProcessorController
         Set<Order> orderStatus = spreadSheetOps.processOrders(orders);
 
         return new ModelAndView("/trackingStatus.jsp", "orders", orderStatus);
+    }
+
+    @RequestMapping(value="/processTransactionsCC", method = RequestMethod.POST)
+    public ModelAndView processTransactionsCC(@RequestParam("FileTransCC") MultipartFile transactionsCC) throws IOException, ParseException
+    {
+        String path = context.getRealPath("");
+
+        transactionsCC.transferTo(new File(path +"/uploads/transactionsCC.xlsx"));
+        File transactions = new File(path +"/uploads/transactionsCC.xlsx");
+
+        spreadSheetOps.processTransactions(transactions);
+        return new ModelAndView("/transCompleted.jsp");
     }
 }
