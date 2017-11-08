@@ -29,7 +29,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
 {
 
     @Override
-    public Set<Item> processFile(MultipartFile userInv, MultipartFile supInv) throws FileNotFoundException, IOException
+    public Set<Item> processFile(MultipartFile userInv, MultipartFile supInv) throws IOException
     {
         Multimap<String, Item> userInvSet = processSellerFile(this.multipartToFile(userInv));
         Multimap<String, Item> supInvSet = processAZFile(this.multipartToFile(supInv));
@@ -64,7 +64,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
     }
 
     //This multimap is used to store <sku, item>.
-    private Multimap<String, Item> processSellerFile(File fileInProcess) throws FileNotFoundException, IOException
+    private Multimap<String, Item> processSellerFile(File fileInProcess) throws IOException
     {
         Multimap<String, Item> objectsMultiMap = HashMultimap.create();
         Multiset<Item> objects = HashMultiset.create();
@@ -109,7 +109,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
         return objectsMultiMap;
     }
 
-    private Multimap<String, Item> processAZFile(File fileInProcess) throws FileNotFoundException, IOException
+    private Multimap<String, Item> processAZFile(File fileInProcess) throws IOException
     {
         Multimap<String, Item> objectsMultiMap = HashMultimap.create();
         Multiset<Item> objects = HashMultiset.create();
@@ -154,7 +154,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
         return objectsMultiMap;
     }
 
-    public File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException
+    private File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException
     {
         File convFile = new File(multipart.getOriginalFilename());
         multipart.transferTo(convFile);
@@ -164,7 +164,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
     @Override
     public Set<Order> processOrders(File orders) throws IOException
     {
-        Set<Order> orderResult = new HashSet<Order>();
+        Set<Order> orderResult = new HashSet<>();
 
         int orderNumber = 0;
         String tracking = "";
@@ -227,11 +227,10 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
 
     public void processTransactions(File transactions) throws IOException, ParseException {
         int llc = 0;
-        Date transDate = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+        String transDate = "";
         String supplier = "";
         int entity = 0;
-        int cc = 0000;
+        int cc = 0;
         double total = 0.0;
 
         FileInputStream fileInputStream = new FileInputStream(transactions);
@@ -257,7 +256,10 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                     case 0: //posting date
                         break;
                     case 1: //transaction date
-                        transDetail.setTransDate(currentCell.getStringCellValue());
+                        Date dateCellValue = currentCell.getDateCellValue();
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        transDate =  sdf.format(dateCellValue);
+                        transDetail.setTransDate(transDate);
                         break;
                     case 2: //Reference ID
                         break;
@@ -298,5 +300,17 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
             System.out.println(url);
 
         }
+    }
+
+    private void genericRestCall(String url)
+    {
+        Client client = Client.create();
+        WebResource webResource = client.resource(url);
+        ClientResponse response = webResource
+                .header("Content-Type", "text/plain")
+                .accept("text/plain")
+                .get(ClientResponse.class);
+        String out = response.getEntity(String.class);
+        String status = out.contains("success") ? "Success" : "Fail";
     }
 }

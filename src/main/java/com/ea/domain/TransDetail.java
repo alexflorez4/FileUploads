@@ -1,5 +1,7 @@
 package main.java.com.ea.domain;
 
+import java.util.Date;
+
 public class TransDetail
 {
     private int llc;
