@@ -4,8 +4,12 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import main.java.com.ea.domain.Item;
 import main.java.com.ea.domain.Order;
+import main.java.com.ea.domain.TransDetail;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -16,16 +20,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Year;
+import java.util.*;
 
 public class SpreadSheetOpsProdImpl implements SpreadSheetOps
 {
 
     @Override
-    public Set<Item> processFile(MultipartFile userInv, MultipartFile supInv) throws FileNotFoundException, IOException
+    public Set<Item> processFile(MultipartFile userInv, MultipartFile supInv) throws IOException
     {
         Multimap<String, Item> userInvSet = processSellerFile(this.multipartToFile(userInv));
         Multimap<String, Item> supInvSet = processAZFile(this.multipartToFile(supInv));
@@ -53,14 +57,14 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
             }
             else
             {
-               itemResult.add(new Item(skuKey, "SKU is not on supplier list."));
+                itemResult.add(new Item(skuKey, "SKU is not on supplier list."));
             }
         }
         return itemResult;
     }
 
     //This multimap is used to store <sku, item>.
-    private Multimap<String, Item> processSellerFile(File fileInProcess) throws FileNotFoundException, IOException
+    private Multimap<String, Item> processSellerFile(File fileInProcess) throws IOException
     {
         Multimap<String, Item> objectsMultiMap = HashMultimap.create();
         Multiset<Item> objects = HashMultiset.create();
@@ -105,7 +109,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
         return objectsMultiMap;
     }
 
-    private Multimap<String, Item> processAZFile(File fileInProcess) throws FileNotFoundException, IOException
+    private Multimap<String, Item> processAZFile(File fileInProcess) throws IOException
     {
         Multimap<String, Item> objectsMultiMap = HashMultimap.create();
         Multiset<Item> objects = HashMultiset.create();
@@ -150,7 +154,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
         return objectsMultiMap;
     }
 
-    public File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException
+    private File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException
     {
         File convFile = new File(multipart.getOriginalFilename());
         multipart.transferTo(convFile);
@@ -160,7 +164,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
     @Override
     public Set<Order> processOrders(File orders) throws IOException
     {
-        Set<Order> orderResult = new HashSet<Order>();
+        Set<Order> orderResult = new HashSet<>();
 
         int orderNumber = 0;
         String tracking = "";
@@ -203,6 +207,110 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
     }
 
     private Order restCallToEAPlat(Order order) {
-        return new Order(order.getOrderNumber(),order.getTrackingId(), "success");
+        Client client = Client.create();
+        String url = "http://www.eagroupvac.com/inventory/users/orderTrackingCall.php?orderid=" + order.getOrderNumber()
+                + "&trackingid=" + order.getTrackingId();
+
+        WebResource webResource = client.resource(url);
+
+        ClientResponse response = webResource
+                .header("Content-Type", "text/plain")
+                .accept("text/plain")
+                .get(ClientResponse.class);
+
+        String out = response.getEntity(String.class);
+
+        String status = out.contains("success") ? "Success" : "Fail";
+
+        return new Order(order.getOrderNumber(),order.getTrackingId(), status);
+    }
+
+    public void processTransactions(File transactions) throws IOException, ParseException {
+        int llc = 0;
+        String transDate = "";
+        String supplier = "";
+        int entity = 0;
+        int cc = 0;
+        double total = 0.0;
+
+        FileInputStream fileInputStream = new FileInputStream(transactions);
+        Workbook workbook = new XSSFWorkbook(fileInputStream);
+        Sheet sheet = workbook.getSheetAt(0);
+        Iterator<Row> iterator = sheet.iterator();
+        iterator.next(); //head row
+
+        while (iterator.hasNext())
+        {
+
+            Row currentRow = iterator.next();
+            Iterator<Cell> cellIterator = currentRow.iterator();
+            TransDetail transDetail = new TransDetail(llc, transDate, supplier, entity, cc, total, "");
+
+            while (cellIterator.hasNext())
+            {
+                Cell currentCell = cellIterator.next();
+                int cell = currentCell.getColumnIndex();
+
+                switch (cell)
+                {
+                    case 0: //posting date
+                        break;
+                    case 1: //transaction date
+                        Date dateCellValue = currentCell.getDateCellValue();
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        transDate =  sdf.format(dateCellValue);
+                        transDetail.setTransDate(transDate);
+                        break;
+                    case 2: //Reference ID
+                        break;
+                    case 3: //Description
+                        transDetail.setSupplier(currentCell.getStringCellValue());
+                        break;
+                    case 4: //Amount
+                        transDetail.setTotal(currentCell.getNumericCellValue());
+                        break;
+                    case 5: //Balance
+                        break;
+                    case 6: //llc
+                        transDetail.setLlc((int)currentCell.getNumericCellValue());
+                        break;
+                    case 7: //cc
+                        transDetail.setCc((int)currentCell.getNumericCellValue());
+                        break;
+                    case 8: //ea_ent_id
+                        transDetail.setEntity((int)currentCell.getNumericCellValue());
+                        break;
+                    case 9: //notes
+                        String extraNotes = org.apache.commons.lang.StringUtils.isEmpty(currentCell.getStringCellValue()) ? "" : currentCell.getStringCellValue();
+                        transDetail.setNotes(extraNotes);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            //make rest call here
+            String url = "http://www.eagroupvac.com/inventory/users/transactionsCC.php?ea_llc=" + transDetail.getLlc() +
+                    "&ea_purchase_date=" + transDetail.getTransDate() +
+                    "&ea_supplier_name=" + transDetail.getSupplier() +
+                    "&ea_cc_number=" +transDetail.getCc() +
+                    "&ea_total=" + transDetail.getTotal() +
+                    "&ea_ent_id=" + transDetail.getEntity() +
+                    "&ea_notes=" + transDetail.getNotes();
+
+            System.out.println(url);
+
+        }
+    }
+
+    private void genericRestCall(String url)
+    {
+        Client client = Client.create();
+        WebResource webResource = client.resource(url);
+        ClientResponse response = webResource
+                .header("Content-Type", "text/plain")
+                .accept("text/plain")
+                .get(ClientResponse.class);
+        String out = response.getEntity(String.class);
+        String status = out.contains("success") ? "Success" : "Fail";
     }
 }

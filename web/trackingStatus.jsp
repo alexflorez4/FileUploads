@@ -18,7 +18,7 @@
 	<h5>Success:</h5>
 	<ol>
         <c:forEach items="${orders}" var="order">
-			<c:if test = "${order.status == 'success'}">
+			<c:if test = "${order.status == 'Success'}">
 			    <li>${order.orderNumber}</li>
 			</c:if>
 		</c:forEach>
@@ -27,7 +27,7 @@
     <h5>Failed:</h5>
     <ol>
         <c:forEach items="${orders}" var="order">
-            <c:if test = "${order.status == 'fail'}">
+            <c:if test = "${order.status == 'Fail'}">
                 <li>${order.orderNumber}</li>
             </c:if>
         </c:forEach>
