@@ -264,7 +264,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                     case 2: //Reference ID
                         break;
                     case 3: //Description
-                        transDetail.setSupplier(currentCell.getStringCellValue());
+                        transDetail.setSupplier(StringUtils.replaceAll(currentCell.getStringCellValue()," ","_"));
                         break;
                     case 4: //Amount
                         transDetail.setTotal(currentCell.getNumericCellValue());
@@ -282,7 +282,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                         break;
                     case 9: //notes
                         String extraNotes = org.apache.commons.lang.StringUtils.isEmpty(currentCell.getStringCellValue()) ? "" : currentCell.getStringCellValue();
-                        transDetail.setNotes(extraNotes);
+                        transDetail.setNotes(StringUtils.replace(extraNotes, " ", "_"));
                         break;
                     default:
                         break;
@@ -298,7 +298,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                     "&ea_notes=" + transDetail.getNotes();
 
             System.out.println(url);
-
+            genericRestCall(url);
         }
     }
 
