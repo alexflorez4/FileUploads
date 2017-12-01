@@ -1,1 +1,4 @@
-sh.exe.stackdump
+.class
+dist
+.war
+DropShip.iml
