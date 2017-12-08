@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Controller
@@ -36,11 +37,11 @@ public class FileProcessorController
     ServletContext context;
 
     @RequestMapping(value = "/processExcel", method = RequestMethod.POST)
-    public ModelAndView proccessExcel(@RequestParam("userFile")MultipartFile userFile, @RequestParam("azfile")MultipartFile azfile)
+    public ModelAndView proccessExcel(@RequestParam("azfile")MultipartFile azfile, @RequestParam("userFile")MultipartFile userFile)
             throws IOException
     {
         //userFile.transferTo(new File("C:\\Temp\\CreatedFile.xlsx"));
-        Set<Item> itemSet = spreadSheetOps.processFile(userFile, azfile);
+        List<Item> itemSet = spreadSheetOps.processFile(azfile, userFile);
         return new ModelAndView("/processOutcome.jsp", "itemSetResult", itemSet);
     }
 

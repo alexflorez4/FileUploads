@@ -29,11 +29,12 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
 {
 
     @Override
-    public Set<Item> processFile(MultipartFile userInv, MultipartFile supInv) throws IOException
+    public List<Item> processFile(MultipartFile supInv, MultipartFile userInv) throws IOException
     {
-        Multimap<String, Item> userInvSet = processSellerFile(this.multipartToFile(userInv));
         Multimap<String, Item> supInvSet = processAZFile(this.multipartToFile(supInv));
-        Set<Item> itemResult = new HashSet<>();
+        Multimap<String, Item> userInvSet = processSellerFile(this.multipartToFile(userInv));
+
+        List<Item> itemResult = new ArrayList<>();
 
         for(String skuKey: userInvSet.keySet())
         {
@@ -45,19 +46,19 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                 Collection<Item> selItem = userInvSet.get(skuKey);
                 Item SellerItem = selItem.iterator().next();
 
-                if(SupplierItem.getQuantity() < 1 && SellerItem.getQuantity() > 0)
-                    itemResult.add(new Item(SupplierItem.getSku(), "Supplier is out of stock."));
-                else if(SellerItem.getQuantity() < 1 && SupplierItem.getQuantity() > 0 )
-                    itemResult.add(new Item(SupplierItem.getSku(),  "Item is now available. Update Amz."));
                 if(SellerItem.getPrice() != SupplierItem.getPrice())
                 {
-                    String notes = SupplierItem.getPrice() > SellerItem.getPrice() ? "Price increased" : "Price decreased";
-                    itemResult.add(new Item(SupplierItem.getSku(), "Attention: " + notes));
+                    String notes = SupplierItem.getPrice() > SellerItem.getPrice() ? " pIncreased " : " pDecreased ";
+                    itemResult.add(new Item(SupplierItem.getSku(), notes, SellerItem.getAccount()));
                 }
+                if(SupplierItem.getQuantity() < 1 && SellerItem.getQuantity() > 0)
+                    itemResult.add(new Item(SupplierItem.getSku(), " outOfStock ", SellerItem.getAccount()));
+                else if(SellerItem.getQuantity() < 1 && SupplierItem.getQuantity() > 0 )
+                    itemResult.add(new Item(SupplierItem.getSku(),  " available ", SellerItem.getAccount()));
             }
             else
             {
-                itemResult.add(new Item(skuKey, "SKU is not on supplier list."));
+                itemResult.add(new Item(skuKey, "notFound"));
             }
         }
         return itemResult;
@@ -72,6 +73,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
         String sku = "";
         double price = 0;
         int quantity = 0;
+        String account = "";
 
         FileInputStream excelFile = new FileInputStream(fileInProcess);
         Workbook workbook = new XSSFWorkbook(excelFile);
@@ -83,7 +85,7 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
         {
             Row currentRow = iterator.next();
             Iterator<Cell> cellIterator = currentRow.iterator();
-            Item item = new Item(sku, quantity, price);
+            Item item = new Item(sku, quantity, price, account);
 
             while (cellIterator.hasNext())
             {
@@ -95,11 +97,14 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                     case 0:
                         item.setSku(StringUtils.isEmpty(currentCell.getStringCellValue()) ? "" : currentCell.getStringCellValue());
                         break;
-                    case 1:
-                        item.setQuantity((int) currentCell.getNumericCellValue());
-                        break;
                     case 2:
                         item.setPrice(currentCell.getNumericCellValue());
+                        break;
+                    case 3:
+                        item.setQuantity((int) currentCell.getNumericCellValue());
+                        break;
+                    case 4:
+                        item.setAccount(StringUtils.isEmpty(currentCell.getStringCellValue()) ? "Account Empty" : currentCell.getStringCellValue());
                     default:
                         break;
                 }
@@ -140,11 +145,12 @@ public class SpreadSheetOpsProdImpl implements SpreadSheetOps
                     case 0:
                         item.setSku(StringUtils.isEmpty(currentCell.getStringCellValue()) ? "" : currentCell.getStringCellValue());
                         break;
-                    case 1:
+                    case 2:
                         item.setPrice(currentCell.getNumericCellValue());
                         break;
-                    case 2:
+                    case 3:
                         item.setQuantity((int) currentCell.getNumericCellValue());
+                        break;
                     default:
                         break;
                 }

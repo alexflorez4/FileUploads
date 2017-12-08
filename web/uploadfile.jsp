@@ -31,8 +31,8 @@
             <div class="form-group row">
                 <div class="row">
                     <h4 class="col-sm-12">AZ Compare:</h4>
-                    <div class="col-sm-12 excel-format"> AZ File: [ SKU | Price | Quantity ]</div>
-                    <div class="col-sm-12 excel-format"> User File: [ SKU | Quantity | Price ]</div>
+                    <div class="col-sm-12 excel-format"> AZ File: [ SKU | Item Name | Price | Quantity ]</div>
+                    <div class="col-sm-12 excel-format"> User File: [ SKU | Item Name | Price | Quantity | Account ]</div>
                 </div>
                 <form:form id="fileForm" action="processExcel.do" method="post" enctype="multipart/form-data">
                 <div class="top-bottom-buffer">

@@ -6,6 +6,7 @@ public class Item
     private int quantity;
     private double price;
     private String notes;
+    private String account;
 
     public Item(String sku, String notes)
     {
@@ -13,10 +14,26 @@ public class Item
         this.notes = notes;
     }
 
-    public Item(String sku, int quantity, double price) {
+    public Item(String sku, String notes, String account)
+    {
+        this.sku = sku;
+        this.notes = notes;
+        this.account = account;
+    }
+
+    public Item(String sku, int quantity, double price)
+    {
         this.sku = sku;
         this.quantity = quantity;
         this.price = price;
+    }
+
+    public Item(String sku, int quantity, double price, String account)
+    {
+        this.sku = sku;
+        this.quantity = quantity;
+        this.price = price;
+        this.account = account;
     }
 
     public String getSku() {
@@ -49,6 +66,14 @@ public class Item
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     @Override

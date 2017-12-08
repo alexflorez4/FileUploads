@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 public class ClientApplication
@@ -27,8 +28,8 @@ public class ClientApplication
             SpreadSheetOps spreadSheetOps = container.getBean(SpreadSheetOpsProdImpl.class);
 
 
-            File fileSupplier = new File("C:\\Users\\alexander-florez\\Documents\\az.xlsx");
-            File fileUser = new File("C:\\Users\\alexander-florez\\Documents\\v_file.xlsx");
+            File fileSupplier = new File("C:\\Users\\alexander-florez\\Documents\\TrainProjects\\sample az.xlsx");
+            File fileUser = new File("C:\\Users\\alexander-florez\\Documents\\TrainProjects\\sample seller.xlsx");
             FileInputStream input1 = new FileInputStream(fileSupplier);
             FileInputStream input2 = new FileInputStream(fileUser);
             MultipartFile multipartFileSup = new MockMultipartFile("fileSupplier", fileSupplier.getName(),
@@ -37,7 +38,7 @@ public class ClientApplication
             MultipartFile multipartFileUser = new MockMultipartFile("fileUser", fileUser.getName(),
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", IOUtils.toByteArray(input2));
 
-            Set<Item> itemSet = spreadSheetOps.processFile(multipartFileUser, multipartFileSup);
+            List<Item> itemSet = spreadSheetOps.processFile(multipartFileSup, multipartFileUser);
 
             for(Item item : itemSet )
             {
